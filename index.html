@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KhetSathi - Smart Farming Companion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    :root {
+      --brand1: #10b981;
+      --brand2: #059669;
+      --brand3: #0ea5e9;
+      --brand4: #f59e0b;
+      --ink: #0f172a;
+    }
+    html, body { font-family: 'Inter', sans-serif; }
+    body {
+      background:
+        radial-gradient(1200px 400px at 10% -10%, rgba(16,185,129,0.15), transparent 60%),
+        radial-gradient(1000px 400px at 100% 10%, rgba(14,165,233,0.15), transparent 60%),
+        linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 50%, #ecfeff 100%);
+    }
+    .hero-gradient { background: linear-gradient(135deg, var(--brand1), var(--brand2)); }
+    .weather-card { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .price-card { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .glow { box-shadow: 0 0 30px rgba(16,185,129,.25); }
+    .card { transition: transform .3s ease, box-shadow .3s ease; }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 12px 24px rgba(0,0,0,.08); }
+    .floating { animation: floating 3s ease-in-out infinite; }
+    @keyframes floating { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .animate-fade-in-up { animation: fadeInUp 700ms ease-out both; }
+    @keyframes fadeInUp { from{opacity:0; transform: translateY(24px);} to{opacity:1; transform: translateY(0);} }
+    .badge { background: rgba(255,255,255,.2); backdrop-filter: blur(4px); }
+    .modal-backdrop { backdrop-filter: blur(6px); }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    .tab-active { color:#065f46; background:linear-gradient(135deg, #d1fae5, #ecfeff); }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col" id="appRoot">
+
+  <!-- Top Nav -->
+  <header class="w-full bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-emerald-100 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
+      <a href="#home" class="flex items-center gap-3 group" id="logoHome">
+        <div class="relative">
+          <svg width="44" height="44" viewBox="0 0 64 64" aria-label="KhetSathi Logo" class="floating">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#10b981"/>
+                <stop offset="100%" stop-color="#059669"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#22c55e"/>
+                <stop offset="100%" stop-color="#16a34a"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="28" fill="url(#g1)"/>
+            <path d="M10 42 C18 38, 28 38, 36 42 S54 46, 58 42" stroke="#d1fae5" stroke-width="2.5" fill="none" opacity=".9"/>
+            <path d="M10 48 C20 44, 28 44, 36 48 S54 52, 58 48" stroke="#bbf7d0" stroke-width="2.5" fill="none" opacity=".9"/>
+            <path d="M36 20 C44 20, 48 26, 48 30 C42 32, 36 28, 36 20Z" fill="url(#g2)" opacity="0.9"/>
+          </svg>
+        </div>
+        <div class="leading-tight">
+          <p class="text-xl font-extrabold text-emerald-700">KhetSathi</p>
+          <p class="text-[12px] text-slate-500" data-i18n="tagline">Smart Farming Companion</p>
+        </div>
+      </a>
+
+      <!-- Primary Nav -->
+      <nav class="hidden md:flex gap-6 text-sm text-slate-600">
+        <a href="#home" class="hover:text-emerald-600 transition" data-i18n="nav.home">Home</a>
+        <a href="#dashboard" class="hover:text-emerald-600 transition" data-i18n="nav.dashboard">Dashboard</a>
+        <a href="#marketplace" class="hover:text-emerald-600 transition" data-i18n="nav.marketplace">Marketplace</a>
+        <a href="#contact" class="hover:text-emerald-600 transition" data-i18n="nav.contact">Contact</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <!-- Language picker -->
+        <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-emerald-200 bg-white">
+          <i class="fa-solid fa-globe text-emerald-600"></i>
+          <select id="langSelect" class="bg-transparent outline-none text-sm text-emerald-700">
+            <option value="en">English</option>
+            <option value="as">Assamese</option>
+            <option value="bn">Bengali</option>
+            <option value="brx">Bodo</option>
+            <option value="doi">Dogri</option>
+            <option value="gu">Gujarati</option>
+            <option value="hi">Hindi</option>
+            <option value="kn">Kannada</option>
+            <option value="ks">Kashmiri</option>
+            <option value="kok">Konkani</option>
+            <option value="mai">Maithili</option>
+            <option value="ml">Malayalam</option>
+            <option value="mni">Manipuri (Meitei)</option>
+            <option value="mr">Marathi</option>
+            <option value="ne">Nepali</option>
+            <option value="or">Odia</option>
+            <option value="pa">Punjabi</option>
+            <option value="sa">Sanskrit</option>
+            <option value="sat">Santali</option>
+            <option value="sd">Sindhi</option>
+            <option value="ta">Tamil</option>
+            <option value="te">Telugu</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </div>
+
+        <button id="btnOpenProfile" class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+          <i class="fa-solid fa-user-gear"></i>
+          <span data-i18n="profile">Profile</span>
+        </button>
+        <button id="btnGetStarted" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition">
+          <i class="fa-solid fa-seedling text-emerald-600"></i>
+          <span data-i18n="get_started">Get started</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Views -->
+  <main class="flex-1">
+    <!-- Home (kept simple so your original content can live here without change) -->
+    <section id="home" class="max-w-7xl mx-auto px-5 py-12">
+      <div class="rounded-2xl hero-gradient text-white p-10 glow">
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          <div class="flex-1">
+            <div class="inline-flex items-center gap-2 badge px-3 py-1 rounded-full text-sm mb-4">
+              <i class="fa-solid fa-circle-check"></i>
+              <span data-i18n="free_badge">No subscriptions. 100% free.</span>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold leading-tight mb-4" data-i18n="hero_title">Grow smarter with KhetSathi</h1>
+            <p class="text-emerald-50/90 text-lg" data-i18n="hero_sub">Personalized recommendations after a quick one-time setup. Buy inputs and sell produce directly.</p>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a href="#dashboard" class="px-4 py-2 rounded-lg bg-white text-emerald-700 hover:bg-emerald-50 transition" data-i18n="go_dashboard">Go to Dashboard</a>
+              <a href="#marketplace" class="px-4 py-2 rounded-lg border border-white/30 hover:bg-white/10 transition text-white" data-i18n="open_market">Open Marketplace</a>
+            </div>
+          </div>
+          <div class="flex-1">
+            <div class="bg-white/10 rounded-xl p-6">
+              <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="p-4 rounded-lg bg-white/10">
+                  <i class="fa-solid fa-wheat-awn text-3xl"></i>
+                  <p class="mt-2 text-sm">Crop Tips</p>
+                </div>
+                <div class="p-4 rounded-lg bg-white/10">
+                  <i class="fa-solid fa-cloud-sun-rain text-3xl"></i>
+                  <p class="mt-2 text-sm">Weather</p>
+                </div>
+                <div class="p-4 rounded-lg bg-white/10">
+                  <i class="fa-solid fa-store text-3xl"></i>
+                  <p class="mt-2 text-sm">Market</p>
+                </div>
+              </div>
+              <p class="mt-4 text-emerald-50 text-sm">Complete your profile to unlock personalized insights.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="max-w-7xl mx-auto px-5 pb-16 hidden">
+      <div class="flex items-center justify-between mb-6 mt-4">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-emerald-800" data-i18n="dash_title">Your Farm Dashboard</h2>
+        <div class="flex items-center gap-3">
+          <button id="btnEditProfile" class="px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 transition">
+            <i class="fa-solid fa-pen-to-square mr-2"></i>Edit profile
+          </button>
+          <button id="btnSoilTest" class="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+            <i class="fa-solid fa-vial-circle-check mr-2"></i>Book free soil test
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card rounded-xl p-5 bg-white border border-emerald-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-500 text-sm">Total Land</p>
+              <p id="sumAcres" class="text-3xl font-extrabold text-emerald-700">0 acres</p>
+            </div>
+            <div class="text-emerald-600 bg-emerald-50 p-3 rounded-lg">
+              <i class="fa-solid fa-mountain-city text-2xl"></i>
+            </div>
+          </div>
+          <p id="sumPincode" class="text-slate-500 mt-3 text-sm">Pincode: —</p>
+        </div>
+
+        <div class="card rounded-xl p-5 bg-white border border-emerald-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-500 text-sm">Soil Type</p>
+              <p id="sumSoil" class="text-2xl font-bold text-emerald-700">Unknown</p>
+            </div>
+            <div class="text-amber-600 bg-amber-50 p-3 rounded-lg">
+              <i class="fa-solid fa-earth-asia text-2xl"></i>
+            </div>
+          </div>
+          <p id="soilNote" class="text-slate-500 mt-3 text-sm">Get a free soil test to personalize recommendations.</p>
+        </div>
+
+        <div class="card rounded-xl p-5 bg-white border border-emerald-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-slate-500 text-sm">Suggested Crops</p>
+              <p id="sumCrops" class="text-emerald-700 font-semibold">—</p>
+            </div>
+            <div class="text-sky-600 bg-sky-50 p-3 rounded-lg">
+              <i class="fa-solid fa-seedling text-2xl"></i>
+            </div>
+          </div>
+          <div id="cropChips" class="mt-3 flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <!-- Recommendations and Actions -->
+      <div class="mt-8 grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card rounded-xl p-6 bg-white border border-emerald-100">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-emerald-800">Personalized Recommendations</h3>
+            <a href="#marketplace" class="text-emerald-700 hover:underline">Shop inputs</a>
+          </div>
+          <ul id="recoList" class="space-y-3">
+            <!-- Filled by JS -->
+          </ul>
+        </div>
+
+        <div class="card rounded-xl p-6 bg-white border border-emerald-100">
+          <h3 class="text-xl font-bold text-emerald-800 mb-4">Quick Actions</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <a href="#marketplace" class="block p-3 rounded-lg border border-emerald-200 hover:bg-emerald-50 text-center">
+              <i class="fa-solid fa-bag-shopping text-emerald-600"></i>
+              <p class="mt-1 text-sm font-medium text-emerald-800">Buy Inputs</p>
+            </a>
+            <a href="#marketplace" class="block p-3 rounded-lg border border-emerald-200 hover:bg-emerald-50 text-center" data-open="sell">
+              <i class="fa-solid fa-store text-emerald-600"></i>
+              <p class="mt-1 text-sm font-medium text-emerald-800">Sell Produce</p>
+            </a>
+            <button class="p-3 rounded-lg border border-emerald-200 hover:bg-emerald-50 text-center" id="qaSoil">
+              <i class="fa-solid fa-vial text-emerald-600"></i>
+              <p class="mt-1 text-sm font-medium text-emerald-800">Soil Test</p>
+            </button>
+            <button class="p-3 rounded-lg border border-emerald-200 hover:bg-emerald-50 text-center" id="qaEdit">
+              <i class="fa-solid fa-user-pen text-emerald-600"></i>
+              <p class="mt-1 text-sm font-medium text-emerald-800">Edit Profile</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Marketplace -->
+    <section id="marketplace" class="max-w-7xl mx-auto px-5 pb-20 hidden">
+      <div class="flex items-center justify-between mb-6 mt-4">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-emerald-800">Marketplace</h2>
+        <div class="flex items-center gap-3">
+          <button id="btnOpenCart" class="relative px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span id="cartCount" class="absolute -top-2 -right-2 text-xs bg-white text-emerald-700 rounded-full px-1.5 py-0.5 border border-emerald-200">0</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mb-4 flex flex-wrap gap-2">
+        <button data-tab="buy" class="tab-btn px-4 py-2 rounded-full border border-emerald-200 hover:bg-emerald-50">Buy Inputs</button>
+        <button data-tab="sell" class="tab-btn px-4 py-2 rounded-full border border-emerald-200 hover:bg-emerald-50">Sell Produce</button>
+        <button data-tab="listings" class="tab-btn px-4 py-2 rounded-full border border-emerald-200 hover:bg-emerald-50">Live Listings</button>
+      </div>
+
+      <!-- BUY -->
+      <div id="tab-buy" class="mt-4">
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Sample products -->
+          <div class="card rounded-xl p-5 bg-white border border-emerald-100">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="p-3 rounded-lg bg-emerald-50 text-emerald-700">
+                  <i class="fa-solid fa-bug-slash text-xl"></i>
+                </div>
+                <div>
+                  <p class="font-semibold">EcoGuard Pesticide</p>
+                  <p class="text-sm text-slate-500">500 ml • Broad-spectrum</p>
+                </div>
+              </div>
+              <p class="font-bold text-emerald-700">₹ 299</p>
+            </div>
+            <button class="mt-4 w-full px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 addToCart" data-id="p1" data-name="EcoGuard Pesticide" data-price="299">
+              Add to cart
+            </button>
+          </div>
+
+          <div class="card rounded-xl p-5 bg-white border border-emerald-100">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="p-3 rounded-lg bg-amber-50 text-amber-700">
+                  <i class="fa-solid fa-seedling text-xl"></i>
+                </div>
+                <div>
+                  <p class="font-semibold">PrimeSeeds Maize</p>
+                  <p class="text-sm text-slate-500">1 kg • High yield</p>
+                </div>
+              </div>
+              <p class="font-bold text-emerald-700">₹ 199</p>
+            </div>
+            <button class="mt-4 w-full px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 addToCart" data-id="p2" data-name="PrimeSeeds Maize" data-price="199">
+              Add to cart
+            </button>
+          </div>
+
+          <div class="card rounded-xl p-5 bg-white border border-emerald-100">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="p-3 rounded-lg bg-sky-50 text-sky-700">
+                  <i class="fa-solid fa-flask text-xl"></i>
+                </div>
+                <div>
+                  <p class="font-semibold">GrowFast Fertilizer</p>
+                  <p class="text-sm text-slate-500">5 kg • NPK 10-26-26</p>
+                </div>
+              </div>
+              <p class="font-bold text-emerald-700">₹ 499</p>
+            </div>
+            <button class="mt-4 w-full px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 addToCart" data-id="p3" data-name="GrowFast Fertilizer" data-price="499">
+              Add to cart
+            </button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Demo only: Orders are simulated. No payments are collected.</p>
+      </div>
+
+      <!-- SELL -->
+      <div id="tab-sell" class="mt-4 hidden">
+        <div class="card rounded-xl p-6 bg-white border border-emerald-100">
+          <h3 class="text-xl font-bold text-emerald-800 mb-4">List your produce</h3>
+          <form id="sellForm" class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Produce name</label>
+              <input required type="text" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="e.g., Tomatoes"/>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Quantity</label>
+              <input required type="number" min="1" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="e.g., 100"/>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Unit</label>
+              <select required class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+                <option value="kg">Kg</option>
+                <option value="quintal">Quintal</option>
+                <option value="tonne">Tonne</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Price per unit (₹)</label>
+              <input required type="number" min="1" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="e.g., 20"/>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm text-slate-600 mb-1">Location</label>
+              <input required type="text" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="Village, District"/>
+            </div>
+            <div class="md:col-span-2 flex justify-end">
+              <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Post Listing</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- LISTINGS -->
+      <div id="tab-listings" class="mt-4 hidden">
+        <div id="listingGrid" class="grid md:grid-cols-3 gap-6">
+          <!-- Filled by JS -->
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Demo only: Contact is simulated with a quick message popup.</p>
+      </div>
+    </section>
+
+    <!-- Contact (simple placeholder) -->
+    <section id="contact" class="max-w-7xl mx-auto px-5 pb-20 hidden">
+      <div class="rounded-xl p-6 bg-white border border-emerald-100 mt-6">
+        <h2 class="text-2xl font-extrabold text-emerald-800 mb-3" data-i18n="contact">Contact</h2>
+        <p class="text-slate-600" data-i18n="contact_copy">Have feedback or need help? Reach out at support@khetsathi.example (demo).</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Registration / First-time Profile Modal -->
+  <section id="profileModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/30 modal-backdrop"></div>
+    <div class="relative bg-white max-w-2xl w-[92%] rounded-2xl p-6 md:p-8 border border-emerald-100 animate-fade-in-up">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h3 class="text-2xl font-extrabold text-emerald-800">Set up your farm profile</h3>
+          <p class="text-slate-500 text-sm">One-time setup to personalize your dashboard.</p>
+        </div>
+        <button id="closeProfile" class="text-slate-500 hover:text-slate-700">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form id="profileForm" class="grid md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm text-slate-600 mb-1">Farmer name (optional)</label>
+          <input type="text" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="Your name"/>
+        </div>
+
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Total acres of land</label>
+          <input required type="number" min="0.1" step="0.1" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="e.g., 3.5"/>
+        </div>
+
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Pincode</label>
+          <input required type="number" min="100000" max="999999" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="e.g., 560001"/>
+        </div>
+
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Primary crop (optional)</label>
+          <input type="text" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="e.g., Wheat"/>
+        </div>
+
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Soil type</label>
+          <select id="soilTypeSelect" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+            <option value="">I don’t know</option>
+            <option>Alluvial</option>
+            <option>Black</option>
+            <option>Red</option>
+            <option>Laterite</option>
+            <option>Desert</option>
+            <option>Mountain</option>
+            <option>Coastal</option>
+          </select>
+          <p class="text-xs text-slate-500 mt-1">Not sure? Book a free soil test after saving.</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm text-slate-600 mb-1">Notes (optional)</label>
+          <textarea rows="2" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="Anything we should know?"></textarea>
+        </div>
+
+        <div class="md:col-span-2 flex items-center justify-between mt-2">
+          <div class="text-xs text-slate-500">No subscriptions. Free forever.</div>
+          <div class="flex gap-3">
+            <button id="btnBookSoilWithin" type="button" class="px-4 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+              Book free soil test
+            </button>
+            <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Save & Continue</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Soil Test Modal -->
+  <section id="soilModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/30 modal-backdrop"></div>
+    <div class="relative bg-white max-w-lg w-[92%] rounded-2xl p-6 md:p-8 border border-emerald-100 animate-fade-in-up">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h3 class="text-xl md:text-2xl font-extrabold text-emerald-800">Free Soil Test Appointment</h3>
+          <p class="text-slate-500 text-sm">We’ll connect you to a nearby testing center.</p>
+        </div>
+        <button id="closeSoil" class="text-slate-500 hover:text-slate-700">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+      <form id="soilForm" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Preferred date</label>
+          <input required type="date" class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"/>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">Time window</label>
+          <select class="w-full rounded-lg border border-emerald-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+            <option>9:00–11:00</option>
+            <option>11:00–13:00</option>
+            <option>14:00–16:00</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" id="soilCancel" class="px-4 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50">Cancel</button>
+          <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Book Appointment</button>
+        </div>
+        <p class="text-xs text-slate-500">Demo only: Appointment is saved locally on your device.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Cart Drawer -->
+  <div id="cartDrawer" class="fixed top-0 right-0 h-full w-[92%] sm:w-[420px] bg-white border-l border-emerald-100 shadow-xl translate-x-full transition-transform z-50">
+    <div class="flex items-center justify-between p-4 border-b border-emerald-100">
+      <h3 class="text-lg font-bold text-emerald-800">Your Cart</h3>
+      <button id="closeCart" class="text-slate-500 hover:text-slate-700">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+    </div>
+    <div id="cartItems" class="p-4 space-y-3 max-h-[65vh] overflow-auto"></div>
+    <div class="p-4 border-t border-emerald-100">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-slate-600">Total</p>
+        <p id="cartTotal" class="text-xl font-extrabold text-emerald-700">₹ 0</p>
+      </div>
+      <button id="placeOrder" class="w-full px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Place order</button>
+      <p class="text-[11px] text-slate-500 mt-2">Demo only: No payment collected. You’ll see a confirmation popup.</p>
+    </div>
+  </div>
+  <div id="cartBackdrop" class="hidden fixed inset-0 bg-slate-900/30 modal-backdrop z-40"></div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full opacity-0 pointer-events-none transition">
+    <span id="toastMsg">Saved</span>
+  </div>
+
+  <script>
+    // State
+    const el = (id)=>document.getElementById(id);
+    const $ = (sel,root=document)=>root.querySelector(sel);
+    const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+
+    const STORAGE_KEYS = {
+      profile: 'ks_profile',
+      appointment: 'ks_appointment',
+      cart: 'ks_cart',
+      listings: 'ks_listings',
+      firstVisit: 'ks_first_visit', // track if we showed onboarding
+      lang: 'ks_lang'
+    };
+
+    // Minimal translations for key labels (fallback to English if missing)
+    const I18N = {
+      en: {
+        'tagline': 'Smart Farming Companion',
+        'nav.home': 'Home',
+        'nav.dashboard': 'Dashboard',
+        'nav.marketplace': 'Marketplace',
+        'nav.contact': 'Contact',
+        'profile': 'Profile',
+        'get_started': 'Get started',
+        'free_badge': 'No subscriptions. 100% free.',
+        'hero_title': 'Grow smarter with KhetSathi',
+        'hero_sub': 'Personalized recommendations after a quick one-time setup. Buy inputs and sell produce directly.',
+        'go_dashboard': 'Go to Dashboard',
+        'open_market': 'Open Marketplace',
+        'dash_title': 'Your Farm Dashboard',
+        'contact': 'Contact',
+        'contact_copy': 'Have feedback or need help? Reach out at support@khetsathi.example (demo).'
+      },
+      hi: {
+        'tagline': 'स्मार्ट खेती साथी',
+        'nav.home': 'होम',
+        'nav.dashboard': 'डैशबोर्ड',
+        'nav.marketplace': 'मार्केटप्लेस',
+        'nav.contact': 'संपर्क',
+        'profile': 'प्रोफाइल',
+        'get_started': 'शुरू करें',
+        'free_badge': 'कोई सब्सक्रिप्शन नहीं। 100% मुफ़्त।',
+        'hero_title': 'KhetSathi के साथ स्मार्ट तरीके से बढ़ें',
+        'hero_sub': 'त्वरित सेटअप के बाद निजी सुझाव। इनपुट खरीदें और सीधे उत्पाद बेचें।',
+        'go_dashboard': 'डैशबोर्ड पर जाएं',
+        'open_market': 'मार्केट खोलें',
+        'dash_title': 'आपका फ़ार्म डैशबोर्ड',
+        'contact': 'संपर्क',
+        'contact_copy': 'प्रतिक्रिया या सहायता चाहिए? support@khetsathi.example (डेमो) पर लिखें।'
+      },
+      bn: {
+        'tagline': 'স্মার্ট চাষের সঙ্গী',
+        'nav.home': 'হোম',
+        'nav.dashboard': 'ড্যাশবোর্ড',
+        'nav.marketplace': 'মার্কেটপ্লেস',
+        'nav.contact': 'যোগাযোগ',
+        'profile': 'প্রোফাইল',
+        'get_started': 'শুরু করুন',
+        'free_badge': 'কোনো সাবস্ক্রিপশন নেই। 100% বিনামূল্যে।',
+        'hero_title': 'KhetSathi দিয়ে আরও স্মার্টভাবে চাষ করুন',
+        'hero_sub': 'একবার দ্রুত সেটআপের পর ব্যক্তিগতকৃত সুপারিশ পান। সরাসরি ইনপুট কিনুন এবং পণ্য বিক্রি করুন।',
+        'go_dashboard': 'ড্যাশবোর্ডে যান',
+        'open_market': 'মার্কেট খুলুন',
+        'dash_title': 'আপনার ফার্ম ড্যাশবোর্ড',
+        'contact': 'যোগাযোগ',
+        'contact_copy': 'প্রতিক্রিয়া বা সাহায্যের প্রয়োজন? support@khetsathi.example (ডেমো) এ যোগাযোগ করুন।'
+      },
+      ta: {
+        'tagline': 'ஸ்மார்ட் விவசாய துணை',
+        'nav.home': 'முகப்பு',
+        'nav.dashboard': 'டாஷ்போர்டு',
+        'nav.marketplace': 'சந்தை',
+        'nav.contact': 'தொடர்பு',
+        'profile': 'சுயவிவரம்',
+        'get_started': 'தொடங்கு',
+        'free_badge': 'சந்தாக்கள் இல்லை. 100% இலவசம்.',
+        'hero_title': 'கெத்சாத்தி மூலம் புத்திசாலித்தனமாக வளருங்கள்',
+        'hero_sub': 'ஒரு முறை விரைவான அமைப்பிற்குப் பிறகு தனிப்பயனாக்கப்பட்ட பரிந்துரைகள். உள்ளீடுகளை வாங்கி பொருட்களை நேரடியாக விற்கவும்.',
+        'go_dashboard': 'டாஷ்போர்டுக்குச் செல்லவும்',
+        'open_market': 'சந்தையைத் திறக்கவும்',
+        'dash_title': 'உங்கள் விவசாய டாஷ்போர்டு',
+        'contact': 'தொடர்பு',
+        'contact_copy': 'கருத்து அல்லது உதவி வேண்டுமா? support@khetsathi.example (டெமோ) இல் தொடர்பு கொள்ளவும்.'
+      }
+    };
+
+    function applyI18n(lang){
+      const dict = I18N[lang] || I18N.en;
+      document.querySelectorAll('[data-i18n]').forEach(node=>{
+        const key = node.getAttribute('data-i18n');
+        node.textContent = (dict[key] || I18N.en[key] || node.textContent);
+      });
+      document.documentElement.lang = lang;
+      saveLS(STORAGE_KEYS.lang, lang);
+      const select = el('langSelect');
+      if(select && select.value !== lang) select.value = lang;
+    }
+
+    function saveLS(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+    function loadLS(key, fallback=null){
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+    }
+
+    function showToast(msg){
+      const t = el('toast');
+      el('toastMsg').textContent = msg;
+      t.style.opacity = '1';
+      t.style.pointerEvents = 'auto';
+      setTimeout(()=>{ t.style.opacity='0'; t.style.pointerEvents='none'; }, 1600);
+    }
+
+    // Simple hash router to toggle sections
+    const sections = ['home','dashboard','marketplace','contact'];
+    function showSection(id){
+      sections.forEach(sec=>{
+        const s = el(sec);
+        if(!s) return;
+        if(sec === id){ s.classList.remove('hidden'); }
+        else { s.classList.add('hidden'); }
+      });
+      // highlight tabs in marketplace
+      if(id === 'marketplace'){ activateTab(currentTab); }
+    }
+
+    // Profile modal handlers
+    function openProfile(){ el('profileModal').classList.remove('hidden'); }
+    function closeProfile(){ el('profileModal').classList.add('hidden'); }
+
+    // Soil modal handlers
+    function openSoil(){ el('soilModal').classList.remove('hidden'); }
+    function closeSoil(){ el('soilModal').classList.add('hidden'); }
+
+    // Dashboard population
+    function soilToCrops(soil){
+      const map = {
+        'Alluvial': ['Wheat','Rice','Sugarcane','Jute','Maize'],
+        'Black': ['Cotton','Soybean','Sorghum','Sunflower','Jowar'],
+        'Red': ['Groundnut','Millets','Pulses','Tobacco','Potatoes'],
+        'Laterite': ['Tea','Coffee','Cashew','Rubber','Coconut'],
+        'Desert': ['Bajra','Guar','Jowar','Dates'],
+        'Mountain': ['Tea','Coffee','Spices','Fruits'],
+        'Coastal': ['Rice','Coconut','Cashew','Spices'],
+        '': ['Wheat','Rice','Maize'] // default if unknown
+      };
+      return map[soil] || map[''];
+    }
+
+    // Global state
+    let currentTab = 'buy';
+    let profile = loadLS(STORAGE_KEYS.profile, null);
+    let cart = loadLS(STORAGE_KEYS.cart, []);
+    let listings = loadLS(STORAGE_KEYS.listings, []);
+
+    function updateDashboard(){
+      if (!profile) return;
+      const {acres, pincode, soilType, crop} = profile;
+      el('sumAcres').textContent = `${acres} acres`;
+      el('sumPincode').textContent = `Pincode: ${pincode}`;
+      el('sumSoil').textContent = soilType || 'Unknown';
+      if(soilType){ el('soilNote').textContent = "Based on your soil type."; }
+
+      const suggestedCrops = soilToCrops(soilType);
+      el('sumCrops').textContent = suggestedCrops.join(', ');
+      el('cropChips').innerHTML = suggestedCrops.map(c=>`<span class="badge px-2 py-0.5 text-sm rounded-full text-emerald-700">${c}</span>`).join('');
+      renderRecommendations(profile);
+    }
+
+    function renderRecommendations(profile){
+      const recoList = el('recoList');
+      if (!recoList) return;
+      recoList.innerHTML = '';
+      const {soilType} = profile;
+      const crops = soilToCrops(soilType);
+
+      if(crops.length > 0){
+        recoList.innerHTML += `
+          <li class="p-3 bg-emerald-50 rounded-lg border border-emerald-100 flex items-center gap-3">
+            <i class="fa-solid fa-seedling text-2xl text-emerald-600"></i>
+            <div>
+              <p class="font-medium text-emerald-700">Crop Rotation Tip</p>
+              <p class="text-sm text-slate-500">Consider planting crops like ${crops.slice(0, 2).join(' and ')} to maintain soil health.</p>
+            </div>
+          </li>
+        `;
+      }
+      recoList.innerHTML += `
+        <li class="p-3 bg-sky-50 rounded-lg border border-sky-100 flex items-center gap-3">
+          <i class="fa-solid fa-cloud-sun-rain text-2xl text-sky-600"></i>
+          <div>
+            <p class="font-medium text-sky-700">Weather Forecast</p>
+            <p class="text-sm text-slate-500">Expect light showers in the next 24 hours. Prepare your fields for adequate drainage.</p>
+          </div>
+        </li>
+        <li class="p-3 bg-amber-50 rounded-lg border border-amber-100 flex items-center gap-3">
+          <i class="fa-solid fa-sack-dollar text-2xl text-amber-600"></i>
+          <div>
+            <p class="font-medium text-amber-700">Market Insight</p>
+            <p class="text-sm text-slate-500">Prices for ${crops[0] || 'your crop'} are trending upwards. Consider selling a portion of your stock soon.</p>
+          </div>
+        </li>
+      `;
+    }
+
+    // Marketplace logic
+    function activateTab(tabName){
+      currentTab = tabName;
+      $$('.tab-btn').forEach(btn => {
+        if(btn.dataset.tab === tabName) { btn.classList.add('tab-active'); }
+        else { btn.classList.remove('tab-active'); }
+      });
+      $$('[id^="tab-"]').forEach(tab => {
+        if(tab.id === `tab-${tabName}`) { tab.classList.remove('hidden'); }
+        else { tab.classList.add('hidden'); }
+      });
+      if(tabName === 'listings') { renderListings(); }
+    }
+
+    function renderCart(){
+      const cartItems = el('cartItems');
+      cartItems.innerHTML = '';
+      if(cart.length === 0){
+        cartItems.innerHTML = `<p class="text-center text-slate-500">Your cart is empty.</p>`;
+      } else {
+        cart.forEach(item => {
+          const cartItemEl = document.createElement('div');
+          cartItemEl.className = 'flex items-center justify-between p-3 rounded-lg border border-emerald-100 bg-emerald-50';
+          cartItemEl.innerHTML = `
+            <div>
+              <p class="font-semibold text-sm">${item.name}</p>
+              <p class="text-xs text-slate-500">₹ ${item.price} x ${item.quantity}</p>
+            </div>
+            <p class="font-bold text-emerald-700">₹ ${item.price * item.quantity}</p>
+          `;
+          cartItems.appendChild(cartItemEl);
+        });
+      }
+      updateCartTotal();
+    }
+
+    function updateCartTotal(){
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      el('cartTotal').textContent = `₹ ${total}`;
+      el('cartCount').textContent = cart.length;
+    }
+
+    function renderListings(){
+      const listingGrid = el('listingGrid');
+      listingGrid.innerHTML = '';
+      if(listings.length === 0){
+        listingGrid.innerHTML = `<div class="md:col-span-3 text-center text-slate-500 py-8">No live listings yet. Be the first to post!</div>`;
+        return;
+      }
+      listings.forEach((listing, index) => {
+        const listingEl = document.createElement('div');
+        listingEl.className = 'card rounded-xl p-5 bg-white border border-emerald-100';
+        listingEl.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="p-3 rounded-lg bg-emerald-50 text-emerald-700">
+                <i class="fa-solid fa-bag-seedling text-xl"></i>
+              </div>
+              <div>
+                <p class="font-semibold">${listing.produce}</p>
+                <p class="text-sm text-slate-500">${listing.quantity} ${listing.unit} • ${listing.location}</p>
+              </div>
+            </div>
+            <p class="font-bold text-emerald-700">₹ ${listing.price}</p>
+          </div>
+          <button class="contact-seller mt-4 w-full px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700" data-index="${index}">
+            Contact Seller
+          </button>
+        `;
+        listingGrid.appendChild(listingEl);
+      });
+    }
+
+    // Main app initialization
+    function init(){
+      // Check for first visit and open profile modal if needed
+      if (!loadLS(STORAGE_KEYS.firstVisit, false)) {
+        setTimeout(()=>{ openProfile(); }, 500);
+        saveLS(STORAGE_KEYS.firstVisit, true);
+      } else {
+        // Load existing profile data
+        const savedProfile = loadLS(STORAGE_KEYS.profile);
+        if (savedProfile) {
+          profile = savedProfile;
+          updateDashboard();
+        }
+      }
+
+      // Apply initial language
+      const savedLang = loadLS(STORAGE_KEYS.lang, 'en');
+      applyI18n(savedLang);
+
+      // Simple hash router
+      const handleHashChange = () => {
+        const hash = window.location.hash.slice(1) || 'home';
+        if(sections.includes(hash)){
+          showSection(hash);
+        } else {
+          showSection('home');
+        }
+      };
+      window.onhashchange = handleHashChange;
+      handleHashChange(); // Run on page load
+
+      // Event Listeners
+      el('langSelect').addEventListener('change', (e) => applyI18n(e.target.value));
+      el('btnGetStarted').addEventListener('click', openProfile);
+      el('btnOpenProfile').addEventListener('click', openProfile);
+      el('btnEditProfile').addEventListener('click', openProfile);
+      el('closeProfile').addEventListener('click', closeProfile);
+      el('btnSoilTest').addEventListener('click', openSoil);
+      el('qaSoil').addEventListener('click', openSoil);
+      el('qaEdit').addEventListener('click', openProfile);
+      el('closeSoil').addEventListener('click', closeSoil);
+      el('soilCancel').addEventListener('click', closeSoil);
+      el('btnBookSoilWithin').addEventListener('click', openSoil);
+
+      el('profileForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inputs = e.target.elements;
+        profile = {
+          name: inputs[0].value,
+          acres: inputs[1].value,
+          pincode: inputs[2].value,
+          crop: inputs[3].value,
+          soilType: inputs[4].value,
+          notes: inputs[5].value,
+        };
+        saveLS(STORAGE_KEYS.profile, profile);
+        updateDashboard();
+        showToast('Profile saved!');
+        closeProfile();
+        // Redirect to dashboard after saving profile
+        window.location.hash = 'dashboard';
+      });
+
+      el('soilForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inputs = e.target.elements;
+        const appointment = {
+          date: inputs[0].value,
+          time: inputs[1].value
+        };
+        saveLS(STORAGE_KEYS.appointment, appointment);
+        showToast('Appointment booked!');
+        closeSoil();
+      });
+
+      // Marketplace listeners
+      $$('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          activateTab(e.target.dataset.tab);
+        });
+      });
+      el('btnOpenCart').addEventListener('click', ()=>{
+        el('cartDrawer').classList.remove('translate-x-full');
+        el('cartBackdrop').classList.remove('hidden');
+        renderCart();
+      });
+      el('closeCart').addEventListener('click', ()=>{
+        el('cartDrawer').classList.add('translate-x-full');
+        el('cartBackdrop').classList.add('hidden');
+      });
+      el('cartBackdrop').addEventListener('click', ()=>{
+        el('cartDrawer').classList.add('translate-x-full');
+        el('cartBackdrop').classList.add('hidden');
+      });
+      
+      $$('.addToCart').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.target.dataset.id;
+          const name = e.target.dataset.name;
+          const price = parseInt(e.target.dataset.price);
+          const existingItem = cart.find(item => item.id === id);
+          if(existingItem){
+            existingItem.quantity += 1;
+          } else {
+            cart.push({id, name, price, quantity: 1});
+          }
+          saveLS(STORAGE_KEYS.cart, cart);
+          showToast(`${name} added to cart!`);
+          updateCartTotal();
+        });
+      });
+
+      el('placeOrder').addEventListener('click', ()=>{
+        showToast('Order placed successfully!');
+        cart = [];
+        saveLS(STORAGE_KEYS.cart, cart);
+        renderCart();
+        setTimeout(()=>{
+          el('cartDrawer').classList.add('translate-x-full');
+          el('cartBackdrop').classList.add('hidden');
+        }, 1000);
+      });
+
+      el('sellForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const inputs = e.target.elements;
+        const newListing = {
+          produce: inputs[0].value,
+          quantity: inputs[1].value,
+          unit: inputs[2].value,
+          price: inputs[3].value,
+          location: inputs[4].value,
+          timestamp: new Date().toISOString()
+        };
+        listings.push(newListing);
+        saveLS(STORAGE_KEYS.listings, listings);
+        renderListings();
+        showToast('Listing posted!');
+        e.target.reset();
+        activateTab('listings');
+      });
+
+      el('listingGrid').addEventListener('click', (e) => {
+        if(e.target.classList.contains('contact-seller')){
+          const index = e.target.dataset.index;
+          const listing = listings[index];
+          showToast(`Simulated contact for ${listing.produce} from ${listing.location}`);
+        }
+      });
+
+      // Initial render for Marketplace
+      activateTab('buy');
+      renderCart();
+      renderListings();
+    }
+    
+    // Start the app when the DOM is ready
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
